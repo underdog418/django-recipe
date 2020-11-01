@@ -7,8 +7,20 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email, password=None, **extra_fields):
         """ Creates and saves a new user """
-        user = self.model(email = email, **extra_fields)
+        if not email:
+            raise ValueError('Users must have an email address to login')
+        # normalize_email() is a helper method form BaseUserManage class
+        user = self.model(email = self.normalize_email(email), **extra_fields)
         user.set_password(password)
+        user.save(using = self._db) # this is only required for supporting multiple databases
+
+        return user
+
+    def create_superuser(self, email, password):
+        """Creates and saves a new super user"""
+        user = self.create_user(email, password)
+        user.is_staff = True
+        user.is_superuser = True
         user.save(using = self._db)
 
         return user
@@ -23,4 +35,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+    
+    
 
